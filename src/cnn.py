@@ -1,59 +1,84 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader
+from preprocess import get_loaders
+
+# Parameters
+save_path = "../data/preprocessed_data.pt"
+batch_size = 16
+
+# Get DataLoaders
+train_loader, val_loader = get_loaders(save_path, batch_size)
 
 class CNN(nn.Module):
     def __init__(self):
-         super(CNN,self).__init__()
+        super(CNN, self).__init__()
 
-         #defining the convultional layers (if kernal size is 3 and padding is 1, then
-         #the length will extend by 3 max - wait actually idk)
-         self.conv1 = nn.Conv1d(in_channels=8,out_channels=16,kernel_size=3,padding=1)
-         self.conv2 = nn.Conv1d(in_channels=16,out_channels=32,kernel_size=3,padding=1)
+        # Define convolutional layers
+        self.conv1 = nn.Conv1d(in_channels=8, out_channels=16, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv1d(in_channels=16, out_channels=32, kernel_size=3, padding=1)
 
-         #define the fully connected layers
-         self.fc1 = nn.Linear(in_features=32*36,out_features=128)
-         self.fc2 = nn.Linear(in_features=128, out_features=2)
+        # Define fully connected layers
+        self.fc1 = nn.Linear(in_features=32 * 36, out_features=128)
+        self.fc2 = nn.Linear(in_features=128, out_features=8)  # Adjusted for 7 classes
 
-    #defining the forward pass -> specified how input tensor(x) is transformed through
-    #each layer of network
-    def forward(self,x):
-         x = self.conv1(x) #x = first convulutional layer
-         x = nn.ReLU()(x) #applies the ReLU activation function - > non-linearity to output
-         x = self.conv2(x)
-         x = nn.ReLU()(x)
+    def forward(self, x):
+        x = self.conv1(x)
+        x = nn.ReLU()(x)
+        x = self.conv2(x)
+        x = nn.ReLU()(x)
 
-        #flattens the tensor into 2d tensor, where each row -> sample
-        #each column -> feature
-         x = x.view(x.size(0),-1)
-         x = self.fc1(x) #applies first fully connected layer to flattened tensor
-         x = torch.relu(x)
-         x = self.fc2(x) #applies final fully connected layers, producing output values
-         return x
+        # Flatten the tensor
+        x = x.view(x.size(0), -1)
+        x = self.fc1(x)
+        x = torch.relu(x)
+        x = self.fc2(x)
+        return x
 
-#create instance of model
+# Create an instance of the model
 model = CNN()
 
-#defining loss function and optimizer(adam)
+# Define loss function and optimizer
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001) #model.parameters() passes all model params to the optimizer. learning rate: 0.001
+optimizer = optim.Adam(model.parameters(), lr=0.001)
 
+# Training loop
 num_epochs = 10
-#training loop
 for epoch in range(num_epochs):
-     for i, data in enumerate(train_loader):
-          inputs, labels = data
-          optimizer.zero_grad() #clears gradients of model parameters to prevent accumlation from previous iterations
-          
-          #forward pass
-          outputs = model(inputs)
+    model.train()
+    running_loss = 0.0
 
-          #compute the loss
-          loss = criterion(outputs,labels)
+    for inputs, labels in train_loader:
+        optimizer.zero_grad()  # Clear gradients
 
-          #Backpropagation
-          loss.backward()
+        # Forward pass
+        outputs = model(inputs)
 
-          #update weights                 
-          optimizer.step()
+        # Compute loss
+        loss = criterion(outputs, labels)
+
+        # Backward pass and update weights
+        loss.backward()
+        optimizer.step()
+
+        running_loss += loss.item()
+
+    print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {running_loss / len(train_loader):.4f}")
+
+# Validation loop
+model.eval()  # Set model to evaluation mode
+correct, total = 0, 0
+
+with torch.no_grad():  # Disable gradient calculations
+    for inputs, labels in val_loader:
+        outputs = model(inputs)
+        _, predicted = torch.max(outputs, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+
+accuracy = 100 * correct / total
+print(f"Validation Accuracy: {accuracy:.2f}%")
+
+# Save the model
+torch.save(model.state_dict(), "emg_cnn_model.pth")

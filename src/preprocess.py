@@ -4,7 +4,6 @@ import numpy as np
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 
-
 def load_all_files(data_dir):
     """
     Traverse the directory to find all .txt files, filter out invalid rows,
@@ -48,38 +47,41 @@ def load_all_files(data_dir):
     combined_data = pd.concat(all_data, ignore_index=True)
     return combined_data
 
-
 def preprocess_data(data):
-    """
-    Preprocess the combined DataFrame: normalize, segment, and convert to PyTorch tensors.
-    """
     # Extract features (columns 1-8) and labels (column 9)
-    features = data.iloc[:, 1:9].values  # EMG channels
-    labels = data.iloc[:, 9].values     # Gesture classes
+    features = data.iloc[:, 1:9].values
+    labels = data.iloc[:, 9].values
 
-    # Debugging: Check if features are numeric
-    if not np.issubdtype(features.dtype, np.number):
-        raise ValueError("Features contain non-numeric values.")
+    # Debugging: Check unique labels
+    print("Unique labels before filtering:", np.unique(labels))
 
-    # Normalize features to range [0, 1], adding epsilon to prevent divide-by-zero
+    # Filter out invalid labels if necessary
+    valid_indices = labels <= 6  # Adjust based on valid label range
+    '''
+    features = features[valid_indices]
+    labels = labels[valid_indices]
+    '''
+    
+    # Normalize features to range [0, 1]
     features = (features - np.min(features, axis=0)) / (np.max(features, axis=0) - np.min(features, axis=0) + 1e-8)
 
     # Segment data into fixed-size windows
     window_size = 36
     segments, segment_labels = [], []
     for i in range(0, len(features) - window_size + 1, window_size):
-        segments.append(features[i:i+window_size].T)  # Transpose to match (channels, length)
-        segment_labels.append(labels[i + window_size - 1])  # Use the label of the last sample in the window
+        segments.append(features[i:i + window_size].T)
+        segment_labels.append(labels[i + window_size - 1])
 
-    # Validate segmentation
     if len(segments) == 0 or len(segment_labels) == 0:
         raise ValueError("Segmentation produced no samples. Check the window size and input data.")
 
-    # Convert to PyTorch tensors
     inputs = torch.tensor(np.array(segments), dtype=torch.float32)
-    targets = torch.tensor(np.array(segment_labels, dtype=np.int64), dtype=torch.long)
-    return inputs, targets
+    targets = torch.tensor(np.array(segment_labels), dtype=torch.long)
 
+    # Debugging: Check unique labels in targets
+    print("Unique labels after filtering:", targets.unique().tolist())
+
+    return inputs, targets
 
 def save_preprocessed_data(data_dir, save_path):
     """
@@ -89,7 +91,6 @@ def save_preprocessed_data(data_dir, save_path):
     inputs, targets = preprocess_data(combined_data)
     torch.save((inputs, targets), save_path)
     print(f"Preprocessed data saved to {save_path}")
-
 
 def load_preprocessed_data(save_path, batch_size):
     """
@@ -112,6 +113,10 @@ def load_preprocessed_data(save_path, batch_size):
 
     return train_loader, val_loader
 
+# Add a function to return train_loader and val_loader
+def get_loaders(save_path, batch_size):
+    return load_preprocessed_data(save_path, batch_size)
+
 
 if __name__ == "__main__":
     # Base directory containing raw data
@@ -126,3 +131,4 @@ if __name__ == "__main__":
     train_loader, val_loader = load_preprocessed_data(save_path, batch_size)
 
     print(f"Train batches: {len(train_loader)}, Validation batches: {len(val_loader)}")
+
