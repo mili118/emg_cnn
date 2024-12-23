@@ -67,11 +67,11 @@ The trained model is evaluated on the validation dataset using:
 - **Training Loss**: Reduced consistently over the epochs.
 - **Validation Accuracy**: Achieved approximately 64.86% accuracy.
 - **Confusion Matrix Insights**:
-![Alt text](output.png)
+![Alt text](Confusion_matrix.png)
   - The model performs well on certain classes (e.g., `Class 0` for unmarked data).
   - Misclassifications are observed between classes with similar EMG patterns.
 - **Classification Report**:
-![Alt text](classification_report.png)
+![Alt text](Classification_report.png)
 
 The classification report evaluates the model's performance on each gesture class using metrics such as **Precision**, **Recall**, and **F1-Score**.
 

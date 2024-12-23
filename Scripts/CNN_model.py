@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from preprocess import get_loaders
 
 # Parameters
-save_path = "../data/preprocessed_data.pt"
+save_path = "../Data/preprocessed_data.pt"
 batch_size = 16
 num_epochs = 10
 model_save_path = "emg_cnn_model.pth"

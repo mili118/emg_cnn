@@ -120,8 +120,8 @@ def get_loaders(save_path, batch_size):
 
 if __name__ == "__main__":
     # Base directory containing raw data
-    data_dir = "../data/rawdata/"
-    save_path = "../data/preprocessed_data.pt"  # Path to save preprocessed data
+    data_dir = "../Data/rawdata/"
+    save_path = "../Data/preprocessed_data.pt"  # Path to save preprocessed data
     batch_size = 16
 
     # Step 1: Preprocess and save the data (run once)
