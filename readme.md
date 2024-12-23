@@ -107,7 +107,7 @@ cd TNT_CNN
 Create a virtual environment and install the required libraries:
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
