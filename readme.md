@@ -68,8 +68,7 @@ The trained model is evaluated on the validation dataset using:
 - **Validation Accuracy**: Achieved approximately 64.86% accuracy.
 - **Confusion Matrix Insights**:
 ![Alt text](Confusion_matrix.png)
-  - The model performs well on certain classes (e.g., `Class 0` for unmarked data).
-  - Misclassifications are observed between classes with similar EMG patterns.
+
 - **Classification Report**:
 ![Alt text](Classification_report.png)
 
